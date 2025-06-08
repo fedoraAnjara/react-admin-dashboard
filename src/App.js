@@ -44,12 +44,16 @@ function AdminLayout({ setIsSidebar }) {
 }
 
 // Exemple très simple UserLayout
-function UserLayout() {
+function UserLayout({ setIsSidebar }) {
   return (
-    <div>
-      <h1>Interface utilisateur (simple)</h1>
-      {/* ici tu mets les composants/pages de l’utilisateur */}
-    </div>
+    <>
+      <Sidebar isSidebar={true} />
+      <main className="content">
+        <Topbar setIsSidebar={setIsSidebar} />
+        <h1>Interface utilisateur (simple)</h1>
+        {/* ici tu mets les composants/pages de l’utilisateur */}
+      </main>
+    </>
   );
 }
 
@@ -66,7 +70,7 @@ function AppContent() {
   }
 
   if (auth.role === "user") {
-    return <UserLayout />;
+    return <UserLayout setIsSidebar={setIsSidebar} />;
   }
 
   return <div>Rôle inconnu</div>;

@@ -26,7 +26,10 @@ const Invoices = () => {
     date: "",
   });
   const [loading, setLoading] = useState(false);
-  const [showForm, setShowForm] = useState(false); // <-- nouveau état
+  const [showForm, setShowForm] = useState(false);
+  const [rowSelectionModel, setRowSelectionModel] = useState([]);
+
+
 
   // Fetch invoices avec user info
   const fetchInvoices = async () => {
@@ -139,6 +142,31 @@ const Invoices = () => {
     },
   ];
 
+  const handleDeleteSelection = async () => {
+    if (rowSelectionModel.length === 0) {
+      alert("Aucune facture sélectionnée.");
+      return;
+    }
+
+    if (!window.confirm("Confirmer la suppression des factures sélectionnées ?")) return;
+
+    try {
+      await Promise.all(
+        rowSelectionModel.map((id) =>
+          fetch(`http://localhost:5000/api/invoices/${id}`, { method: "DELETE" })
+        )
+      );
+
+      setInvoices((prev) => prev.filter((inv) => !rowSelectionModel.includes(inv.id)));
+      setRowSelectionModel([]); // Réinitialise la sélection
+    } catch (error) {
+      alert("Erreur lors de la suppression");
+      console.error(error);
+    }
+  };
+
+
+
   return (
     <Box m="20px">
       <Header title="INVOICES" subtitle="List of Invoice Balances" />
@@ -151,6 +179,15 @@ const Invoices = () => {
         sx={{ mb: 2 }}
       >
         {showForm ? "Annuler" : "Ajouter une facture"}
+      </Button>
+
+      <Button
+        variant="contained"
+        color="error"
+        onClick={handleDeleteSelection}
+        sx={{ mb: 2, ml: 2 }}
+      >
+        Supprimer la sélection
       </Button>
 
       {/* Formulaire affiché uniquement si showForm est vrai */}
@@ -238,7 +275,15 @@ const Invoices = () => {
           },
         }}
       >
-        <DataGrid checkboxSelection rows={invoices} columns={columns} />
+        <DataGrid
+          checkboxSelection
+          rows={invoices}
+          columns={columns}
+          selectionModel={rowSelectionModel}
+          onSelectionModelChange={(newSelection) => {
+            setRowSelectionModel(newSelection);
+          }}
+        />
       </Box>
     </Box>
   );

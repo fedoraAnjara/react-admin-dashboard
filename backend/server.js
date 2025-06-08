@@ -93,7 +93,6 @@ app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // Récupérer l'utilisateur par email
     const result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
     const user = result.rows[0];
 
@@ -101,20 +100,43 @@ app.post("/api/login", async (req, res) => {
       return res.status(401).json({ error: "Utilisateur non trouvé" });
     }
 
-    // Ici tu compares le mot de passe (à améliorer avec hash, bcrypt, etc.)
-    // Pour l'exemple on suppose password = '1234' pour tout le monde (à changer !)
-    if (password !== password) {
+    // ✅ Comparer le mot de passe envoyé avec celui stocké en base
+    if (user.password !== password) {
       return res.status(401).json({ error: "Mot de passe incorrect" });
     }
 
-    // Envoi des données utilisateur + rôle
+    // Si ok, envoyer les infos nécessaires
     res.json({
       id: user.id,
       email: user.email,
-      firstName: user.first_name,
-      lastName: user.last_name,
-      role: user.role, // "admin" ou "user"
+      role: user.role,
+      token: "fake-jwt-token", // ou ton vrai token plus tard
     });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+
+app.delete("/api/invoices/:id", async (req, res) => {
+  const id = req.params.id;
+  try {
+    await pool.query("DELETE FROM invoices WHERE id = $1", [id]);
+    res.status(200).json({ message: "Facture supprimée" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+// Pour supprimer un contact
+app.delete("/api/contacts/:id", async (req, res) => {
+  const id = req.params.id;
+  try {
+    await pool.query("DELETE FROM contacts WHERE id = $1", [id]);
+    res.status(200).json({ message: "Contact supprimé" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Erreur serveur" });
