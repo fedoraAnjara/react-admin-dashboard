@@ -1,13 +1,41 @@
 import { Box } from "@mui/material";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
-import { mockDataContacts } from "../../data/mockData";
 import Header from "../../components/Header";
 import { useTheme } from "@mui/material";
+import { useEffect, useState } from "react";
 
 const Contacts = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/users");
+        const data = await response.json();
+
+        // Adapter les données au format attendu par DataGrid
+        const formattedUsers = data.map((user) => ({
+          id: user.id,
+          registrarId: user.id, // ou autre champ si disponible
+          name: `${user.first_name} ${user.last_name}`,
+          phone: user.contact,
+          email: user.email,
+          address: `${user.address1} ${user.address2}`,
+          city: "N/A", // ou ajouter un champ dans la DB si nécessaire
+          zipCode: "N/A",
+        }));
+
+        setUsers(formattedUsers);
+      } catch (err) {
+        console.error("Erreur de chargement des utilisateurs :", err);
+      }
+    };
+
+    fetchUsers();
+  }, []);
 
   const columns = [
     { field: "id", headerName: "ID", flex: 0.5 },
@@ -17,13 +45,6 @@ const Contacts = () => {
       headerName: "Name",
       flex: 1,
       cellClassName: "name-column--cell",
-    },
-    {
-      field: "age",
-      headerName: "Age",
-      type: "number",
-      headerAlign: "left",
-      align: "left",
     },
     {
       field: "phone",
@@ -56,7 +77,7 @@ const Contacts = () => {
     <Box m="20px">
       <Header
         title="CONTACTS"
-        subtitle="List of Contacts for Future Reference"
+        subtitle="List of Contacts from PostgreSQL"
       />
       <Box
         m="40px 0 0 0"
@@ -91,7 +112,7 @@ const Contacts = () => {
         }}
       >
         <DataGrid
-          rows={mockDataContacts}
+          rows={users}
           columns={columns}
           components={{ Toolbar: GridToolbar }}
         />
