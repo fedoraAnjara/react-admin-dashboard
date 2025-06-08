@@ -248,7 +248,7 @@ const Invoices = () => {
 
       {/* Tableau des factures */}
       <Box
-        height="75vh"
+        height="65vh"
         sx={{
           "& .MuiDataGrid-root": {
             border: "none",
@@ -279,6 +279,9 @@ const Invoices = () => {
           checkboxSelection
           rows={invoices}
           columns={columns}
+          pageSize={5} // ✅ Affiche 5 lignes par page
+          rowsPerPageOptions={[5]} // ✅ Fixe uniquement l'option 5
+          pagination // ✅ Active la pagination côté client
           selectionModel={rowSelectionModel}
           onSelectionModelChange={(newSelection) => {
             setRowSelectionModel(newSelection);

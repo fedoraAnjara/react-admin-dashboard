@@ -77,11 +77,11 @@ const Contacts = () => {
     <Box m="20px">
       <Header
         title="CONTACTS"
-        subtitle="List of Contacts from PostgreSQL"
+        subtitle="List of all user of the app"
       />
       <Box
         m="40px 0 0 0"
-        height="75vh"
+        height="65vh"
         sx={{
           "& .MuiDataGrid-root": {
             border: "none",
@@ -115,6 +115,9 @@ const Contacts = () => {
           rows={users}
           columns={columns}
           components={{ Toolbar: GridToolbar }}
+          pageSize={5} // <= 5 utilisateurs par page
+          rowsPerPageOptions={[5]} // <= fixe l’option à 5 uniquement
+          pagination // <= active la pagination côté client
         />
       </Box>
     </Box>
