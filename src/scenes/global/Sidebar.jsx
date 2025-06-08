@@ -5,7 +5,7 @@ import { AuthContext } from "../../AuthContext";
 import { Link } from "react-router-dom";
 import "react-pro-sidebar/dist/css/styles.css";
 import { tokens } from "../../theme";
-import { useFormikContext } from 'formik';
+
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
 import ContactsOutlinedIcon from "@mui/icons-material/ContactsOutlined";
@@ -36,14 +36,11 @@ const Item = ({ title, to, icon, selected, setSelected }) => {
 };
 
 const Sidebar = () => {
-const theme = useTheme();
+  const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [selected, setSelected] = useState("Dashboard");
   const { auth } = useContext(AuthContext);
-  const [previewImage, setPreviewImage] = useState(null);
-
-  const { setFieldValue } = useFormikContext() || {};
 
   
 
@@ -90,37 +87,6 @@ const theme = useTheme();
           {/* UTILISATEUR CONNECTÉ */}
           {!isCollapsed && (
             <Box mb="25px">
-                <Box display="flex" justifyContent="center" alignItems="center">
-                    <input
-                      type="file"
-                      id="upload-photo"
-                      name="profilePicture"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.currentTarget.files[0];
-                        if (file) {
-                          setPreviewImage(URL.createObjectURL(file));  // Met à jour la preview locale
-                          if (setFieldValue) setFieldValue("profilePicture", file);  // Formik update
-                        }
-                      }}
-                      style={{ display: "none" }}
-                    />
-                  <label htmlFor="upload-photo">
-                    <img
-                      alt="profile-user"
-                      width="100px"
-                      height="100px"
-                      src={
-                        previewImage
-                          ? previewImage
-                          : auth?.profile_picture
-                          ? `http://localhost:5000/uploads/${auth.profile_picture}`
-                          : "/assets/user.png"
-                      }
-                      style={{ cursor: "pointer", borderRadius: "50%" }}
-                    />
-                  </label>
-                </Box>
               <Box textAlign="center" mt={1}>
                 <Typography variant="h2" color={colors.grey[100]} fontWeight="bold">
                   {auth?.name || "Utilisateur"}

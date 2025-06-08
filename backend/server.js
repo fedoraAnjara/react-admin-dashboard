@@ -143,5 +143,3 @@ app.delete("/api/contacts/:id", async (req, res) => {
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
-
-app.use("/uploads", express.static("uploads"));
