@@ -21,7 +21,8 @@ const Login = () => {
     const data = await res.json();
 
     if (res.ok) {
-      login(data); // stocke token + role
+      console.log("Données reçues après login :", data);
+      login(data); // stocke token + role + name
       if (data.role === "admin") navigate("/");
       else if (data.role === "user") navigate("/user");
     } else {

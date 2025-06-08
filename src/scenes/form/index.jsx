@@ -1,4 +1,4 @@
-import { Box, Button, TextField } from "@mui/material";
+import { Box, Button, TextField, MenuItem } from "@mui/material";
 import { Formik } from "formik";
 import * as yup from "yup";
 import useMediaQuery from "@mui/material/useMediaQuery";
@@ -109,7 +109,7 @@ const handleFormSubmit = async (values, { resetForm }) => {
                 fullWidth
                 variant="filled"
                 type="text"
-                label="Address 1"
+                label="Address"
                 onBlur={handleBlur}
                 onChange={handleChange}
                 value={values.address1}
@@ -122,7 +122,7 @@ const handleFormSubmit = async (values, { resetForm }) => {
                 fullWidth
                 variant="filled"
                 type="text"
-                label="Address 2"
+                label="City"
                 onBlur={handleBlur}
                 onChange={handleChange}
                 value={values.address2}
@@ -131,6 +131,22 @@ const handleFormSubmit = async (values, { resetForm }) => {
                 helperText={touched.address2 && errors.address2}
                 sx={{ gridColumn: "span 4" }}
               />
+              <TextField
+                select
+                fullWidth
+                variant="filled"
+                label="Role"
+                onBlur={handleBlur}
+                onChange={handleChange}
+                value={values.role}
+                name="role"
+                error={!!touched.role && !!errors.role}
+                helperText={touched.role && errors.role}
+                sx={{ gridColumn: "span 4" }}
+              >
+                <MenuItem value="coach">Coach</MenuItem>
+                <MenuItem value="user">User</MenuItem>
+              </TextField>
             </Box>
             <Box display="flex" justifyContent="end" mt="20px">
               <Button type="submit" color="secondary" variant="contained">
@@ -157,14 +173,16 @@ const checkoutSchema = yup.object().shape({
     .required("required"),
   address1: yup.string().required("required"),
   address2: yup.string().required("required"),
+  role: yup.string().oneOf(["coach", "user"]).required("required"),
 });
 const initialValues = {
   firstName: "",
   lastName: "",
   email: "",
   contact: "",
-  address1: "",
+  address: "",
   address2: "",
+  role: "",
 };
 
 export default Form;

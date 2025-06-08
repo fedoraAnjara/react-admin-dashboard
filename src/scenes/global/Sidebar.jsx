@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
 import { Box, IconButton, Typography, useTheme } from "@mui/material";
+import { AuthContext } from "../../AuthContext";
 import { Link } from "react-router-dom";
 import "react-pro-sidebar/dist/css/styles.css";
 import { tokens } from "../../theme";
+import { useFormikContext } from 'formik';
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
 import ContactsOutlinedIcon from "@mui/icons-material/ContactsOutlined";
@@ -23,9 +25,7 @@ const Item = ({ title, to, icon, selected, setSelected }) => {
   return (
     <MenuItem
       active={selected === title}
-      style={{
-        color: colors.grey[100],
-      }}
+      style={{ color: colors.grey[100] }}
       onClick={() => setSelected(title)}
       icon={icon}
     >
@@ -36,10 +36,16 @@ const Item = ({ title, to, icon, selected, setSelected }) => {
 };
 
 const Sidebar = () => {
-  const theme = useTheme();
+const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [selected, setSelected] = useState("Dashboard");
+  const { auth } = useContext(AuthContext);
+  const [previewImage, setPreviewImage] = useState(null);
+
+  const { setFieldValue } = useFormikContext() || {};
+
+  
 
   return (
     <Box
@@ -63,24 +69,16 @@ const Sidebar = () => {
     >
       <ProSidebar collapsed={isCollapsed}>
         <Menu iconShape="square">
-          {/* LOGO AND MENU ICON */}
+          {/* LOGO + TOGGLE */}
           <MenuItem
             onClick={() => setIsCollapsed(!isCollapsed)}
             icon={isCollapsed ? <MenuOutlinedIcon /> : undefined}
-            style={{
-              margin: "10px 0 20px 0",
-              color: colors.grey[100],
-            }}
+            style={{ margin: "10px 0 20px 0", color: colors.grey[100] }}
           >
             {!isCollapsed && (
-              <Box
-                display="flex"
-                justifyContent="space-between"
-                alignItems="center"
-                ml="15px"
-              >
+              <Box display="flex" justifyContent="space-between" alignItems="center" ml="15px">
                 <Typography variant="h3" color={colors.grey[100]}>
-                  ADMINIS
+                  FITNEXIA
                 </Typography>
                 <IconButton onClick={() => setIsCollapsed(!isCollapsed)}>
                   <MenuOutlinedIcon />
@@ -89,135 +87,76 @@ const Sidebar = () => {
             )}
           </MenuItem>
 
+          {/* UTILISATEUR CONNECTÉ */}
           {!isCollapsed && (
             <Box mb="25px">
-              <Box display="flex" justifyContent="center" alignItems="center">
-                <img
-                  alt="profile-user"
-                  width="100px"
-                  height="100px"
-                  src={`../../assets/user.png`}
-                  style={{ cursor: "pointer", borderRadius: "50%" }}
-                />
-              </Box>
-              <Box textAlign="center">
-                <Typography
-                  variant="h2"
-                  color={colors.grey[100]}
-                  fontWeight="bold"
-                  sx={{ m: "10px 0 0 0" }}
-                >
-                  Ed Roh
+                <Box display="flex" justifyContent="center" alignItems="center">
+                    <input
+                      type="file"
+                      id="upload-photo"
+                      name="profilePicture"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.currentTarget.files[0];
+                        if (file) {
+                          setPreviewImage(URL.createObjectURL(file));  // Met à jour la preview locale
+                          if (setFieldValue) setFieldValue("profilePicture", file);  // Formik update
+                        }
+                      }}
+                      style={{ display: "none" }}
+                    />
+                  <label htmlFor="upload-photo">
+                    <img
+                      alt="profile-user"
+                      width="100px"
+                      height="100px"
+                      src={
+                        previewImage
+                          ? previewImage
+                          : auth?.profile_picture
+                          ? `http://localhost:5000/uploads/${auth.profile_picture}`
+                          : "/assets/user.png"
+                      }
+                      style={{ cursor: "pointer", borderRadius: "50%" }}
+                    />
+                  </label>
+                </Box>
+              <Box textAlign="center" mt={1}>
+                <Typography variant="h2" color={colors.grey[100]} fontWeight="bold">
+                  {auth?.name || "Utilisateur"}
                 </Typography>
                 <Typography variant="h5" color={colors.greenAccent[500]}>
-                  VP Fancy Admin
+                  {auth?.role || "Rôle inconnu"}
                 </Typography>
               </Box>
             </Box>
           )}
 
+          {/* NAVIGATION */}
           <Box paddingLeft={isCollapsed ? undefined : "10%"}>
-            <Item
-              title="Dashboard"
-              to="/"
-              icon={<HomeOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
+            <Item title="Dashboard" to="/" icon={<HomeOutlinedIcon />} selected={selected} setSelected={setSelected} />
 
-            <Typography
-              variant="h6"
-              color={colors.grey[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
+            <Typography variant="h6" color={colors.grey[300]} sx={{ m: "15px 0 5px 20px" }}>
               Data
             </Typography>
-            <Item
-              title="Manage Team"
-              to="/team"
-              icon={<PeopleOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
-              title="Contacts Information"
-              to="/contacts"
-              icon={<ContactsOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
-              title="Invoices Balances"
-              to="/invoices"
-              icon={<ReceiptOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
+            <Item title="Manage Team" to="/team" icon={<PeopleOutlinedIcon />} selected={selected} setSelected={setSelected} />
+            <Item title="Contacts Information" to="/contacts" icon={<ContactsOutlinedIcon />} selected={selected} setSelected={setSelected} />
+            <Item title="Invoices Balances" to="/invoices" icon={<ReceiptOutlinedIcon />} selected={selected} setSelected={setSelected} />
 
-            <Typography
-              variant="h6"
-              color={colors.grey[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
+            <Typography variant="h6" color={colors.grey[300]} sx={{ m: "15px 0 5px 20px" }}>
               Pages
             </Typography>
-            <Item
-              title="Profile Form"
-              to="/form"
-              icon={<PersonOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
-              title="Calendar"
-              to="/calendar"
-              icon={<CalendarTodayOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
-              title="FAQ Page"
-              to="/faq"
-              icon={<HelpOutlineOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
+            <Item title="Profile Form" to="/form" icon={<PersonOutlinedIcon />} selected={selected} setSelected={setSelected} />
+            <Item title="Calendar" to="/calendar" icon={<CalendarTodayOutlinedIcon />} selected={selected} setSelected={setSelected} />
+            <Item title="FAQ Page" to="/faq" icon={<HelpOutlineOutlinedIcon />} selected={selected} setSelected={setSelected} />
 
-            <Typography
-              variant="h6"
-              color={colors.grey[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
+            <Typography variant="h6" color={colors.grey[300]} sx={{ m: "15px 0 5px 20px" }}>
               Charts
             </Typography>
-            <Item
-              title="Bar Chart"
-              to="/bar"
-              icon={<BarChartOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
-              title="Pie Chart"
-              to="/pie"
-              icon={<PieChartOutlineOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
-              title="Line Chart"
-              to="/line"
-              icon={<TimelineOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
-              title="Geography Chart"
-              to="/geography"
-              icon={<MapOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
+            <Item title="Bar Chart" to="/bar" icon={<BarChartOutlinedIcon />} selected={selected} setSelected={setSelected} />
+            <Item title="Pie Chart" to="/pie" icon={<PieChartOutlineOutlinedIcon />} selected={selected} setSelected={setSelected} />
+            <Item title="Line Chart" to="/line" icon={<TimelineOutlinedIcon />} selected={selected} setSelected={setSelected} />
+            <Item title="Geography Chart" to="/geography" icon={<MapOutlinedIcon />} selected={selected} setSelected={setSelected} />
           </Box>
         </Menu>
       </ProSidebar>

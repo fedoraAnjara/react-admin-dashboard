@@ -23,9 +23,9 @@ const Contacts = () => {
           name: `${user.first_name} ${user.last_name}`,
           phone: user.contact,
           email: user.email,
-          address: `${user.address1} ${user.address2}`,
-          city: "N/A", // ou ajouter un champ dans la DB si nécessaire
-          zipCode: "N/A",
+          address: user.address1,
+          city: user.address2, // ou ajouter un champ dans la DB si nécessaire
+          role: user.role,
         }));
 
         setUsers(formattedUsers);
@@ -67,8 +67,8 @@ const Contacts = () => {
       flex: 1,
     },
     {
-      field: "zipCode",
-      headerName: "Zip Code",
+      field: "role",
+      headerName: "Acces",
       flex: 1,
     },
   ];

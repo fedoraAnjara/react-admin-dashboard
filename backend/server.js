@@ -19,14 +19,14 @@ const pool = new Pool({
 
 // Route POST pour créer un utilisateur
 app.post("/api/users", async (req, res) => {
-  const { firstName, lastName, email, contact, address1, address2 } = req.body;
+  const { firstName, lastName, email, contact, address1, address2, role } = req.body;
 
   try {
     const result = await pool.query(
-      `INSERT INTO users (first_name, last_name, email, contact, address1, address2)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO users (first_name, last_name, email, contact, address1, address2, role)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [firstName, lastName, email, contact, address1, address2]
+      [firstName, lastName, email, contact, address1, address2, role]
     );
 
     res.status(201).json({ message: "User created", user: result.rows[0] });
@@ -108,6 +108,7 @@ app.post("/api/login", async (req, res) => {
     // Si ok, envoyer les infos nécessaires
     res.json({
       id: user.id,
+      name: user.first_name +"  "+ user.last_name,
       email: user.email,
       role: user.role,
       token: "fake-jwt-token", // ou ton vrai token plus tard
@@ -142,3 +143,5 @@ app.delete("/api/contacts/:id", async (req, res) => {
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
+
+app.use("/uploads", express.static("uploads"));
