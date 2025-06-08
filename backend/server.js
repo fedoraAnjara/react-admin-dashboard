@@ -50,3 +50,41 @@ app.get("/api/users", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch users" });
   }
 });
+
+app.get("/api/invoices", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        invoices.id,
+        invoices.cost,
+        invoices.date,
+        users.first_name || ' ' || users.last_name AS name,
+        users.email,
+        users.contact AS phone
+      FROM invoices
+      JOIN users ON invoices.user_id = users.id
+      ORDER BY invoices.date DESC
+    `);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch invoices" });
+  }
+});
+
+
+app.post("/api/invoices", async (req, res) => {
+  const { userId, cost, date } = req.body;
+  try {
+    await pool.query(
+      "INSERT INTO invoices (user_id, cost, date) VALUES ($1, $2, $3)",
+      [userId, cost, date]
+    );
+    res.status(201).json({ message: "Facture ajoutée avec succès" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erreur lors de l'ajout de la facture" });
+  }
+});
+
