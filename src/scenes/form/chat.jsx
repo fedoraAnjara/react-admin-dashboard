@@ -1,6 +1,7 @@
 import { Box, TextField, Button, Typography, Paper } from "@mui/material";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useContext } from "react";
 import Header from "../../components/Header";
+import { AuthContext } from "../../AuthContext"; // ⬅️ Ajouté
 
 const autoResponses = [
   {
@@ -32,8 +33,14 @@ const getAutoResponse = (message) => {
 };
 
 const ChatBot = () => {
+  const { auth } = useContext(AuthContext);
+  const userName = auth?.name || "Utilisateur";
+
   const [messages, setMessages] = useState([
-    { from: "bot", text: "Bonjour ! Comment puis-je vous aider aujourd'hui ?" },
+    {
+      from: "bot",
+      text: `Bonjour ${userName} ! Comment puis-je t'aider aujourd'hui ?`,
+    },
   ]);
   const [input, setInput] = useState("");
   const chatEndRef = useRef(null);
@@ -65,9 +72,9 @@ const ChatBot = () => {
         sx={{
           p: 2,
           height: "400px",
-          overflowY: "hidden",
+          overflowY: "auto",
           mb: 2,
-          bgcolor: "rgba(245, 245, 245, 0.75) ",
+          bgcolor: "rgba(245, 245, 245, 0.75)",
           borderRadius: 3,
           border: "1px solid #ccc",
         }}
@@ -99,25 +106,24 @@ const ChatBot = () => {
 
       <Box display="flex" gap={2} alignItems="center">
         <TextField
-        fullWidth
-        variant="outlined"
-        placeholder="Écrivez votre message..."
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyDown={(e) => {
+          fullWidth
+          variant="outlined"
+          placeholder="Écrivez votre message..."
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
             if (e.key === "Enter") handleSend();
-        }}
-        sx={{
+          }}
+          sx={{
             "& .MuiOutlinedInput-root": {
-            borderRadius: "20px",
-            overflowY: "hidden",
-            backgroundColor: " rgba(245, 245, 245, 0.75)  ",
-            color: "black",
+              borderRadius: "20px",
+              backgroundColor: "white",
+              color: "black",
             },
             input: {
-            color: "black", 
+              color: "black",
             },
-        }}
+          }}
         />
         <Button
           variant="contained"
