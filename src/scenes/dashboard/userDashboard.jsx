@@ -92,13 +92,26 @@ const DashboardUser = () => {
 
   return (
     <Box m="20px">
-      <Typography variant="h4" fontWeight="bold" color={colors.grey[100]} mb="20px">
-        Dashboard Utilisateur
-      </Typography>
-
       <Typography variant="h6" color={colors.grey[300]} mb="20px">
         Bienvenue {auth?.name || "Utilisateur"}
       </Typography>
+        {dashboardData.subscriptionEnd ? (
+        <Typography variant="body1" color={colors.grey[100]} mb="20px">
+            Date de fin d'abonnement :{" "}
+            <strong>
+            {new Date(dashboardData.subscriptionEnd).toLocaleDateString("fr-FR", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+            })}
+            </strong>
+        </Typography>
+        ) : (
+        <Typography variant="body1" color={colors.grey[100]} mb="20px">
+            Aucun abonnement actif
+        </Typography>
+        )}
+
 
       {/* Statistiques */}
       <Box display="flex" gap="20px" mb="30px" flexWrap="wrap">

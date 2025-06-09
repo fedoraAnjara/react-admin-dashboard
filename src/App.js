@@ -4,6 +4,7 @@ import { AuthContext, AuthProvider } from "./AuthContext";
 import React, { useContext } from "react";
 import Topbar from "./scenes/global/Topbar";
 import Sidebar from "./scenes/global/Sidebar";
+import UserSidebar from "./scenes/global/UserSidebar";
 import Dashboard from "./scenes/dashboard/index";
 import DashboardUser from "./scenes/dashboard/userDashboard";
 import Team from "./scenes/team/index";
@@ -48,7 +49,7 @@ function AdminLayout({ setIsSidebar }) {
 function UserLayout({ setIsSidebar }) {
   return (
     <>
-      <Sidebar isSidebar={true} />
+      <UserSidebar isSidebar={true} />
       <main className="content">
         <Topbar setIsSidebar={setIsSidebar} />
         <Routes>

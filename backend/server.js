@@ -225,6 +225,143 @@ app.delete("/api/contacts/:id", async (req, res) => {
   }
 });
 
+// GET sessions from PostgreSQL
+app.get('/api/user_dashboard_data', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        udd.id, 
+        udd.user_id, 
+        u.first_name, 
+        u.last_name, 
+        udd.week_start, 
+        udd.workouts_done, 
+        udd.calories_burned,
+        a.end_date
+      FROM user_dashboard_data udd
+      JOIN users u ON udd.user_id = u.id
+      LEFT JOIN (
+        SELECT DISTINCT ON (user_id) user_id, end_date
+        FROM abonnement
+        ORDER BY user_id, end_date DESC
+      ) a ON a.user_id = u.id
+      ORDER BY udd.week_start DESC
+    `);
+
+    const data = result.rows.map(row => ({
+      id: row.id,
+      user_id: row.user_id,
+      name: `${row.first_name} ${row.last_name}`,
+      week_start: row.week_start,
+      workouts_done: row.workouts_done,
+      calories_burned: row.calories_burned,
+      end_date: row.end_date, // ✅ ajouté ici
+    }));
+
+    res.json(data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erreur lors de la récupération des sessions" });
+  }
+});
+
+// POST new session into PostgreSQL
+app.post('/api/user_dashboard_data', async (req, res) => {
+  const { user_id, week_start, workouts_done, calories_burned } = req.body;
+  try {
+    // Vérifier que user existe
+    const userCheck = await pool.query("SELECT id FROM users WHERE id = $1", [user_id]);
+    if (userCheck.rowCount === 0) {
+      return res.status(400).json({ error: "Utilisateur non trouvé" });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO user_dashboard_data (user_id, week_start, workouts_done, calories_burned)
+       VALUES ($1, $2, $3, $4)
+       RETURNING *`,
+      [user_id, week_start, workouts_done, calories_burned]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erreur lors de l'ajout de la session" });
+  }
+});
+
+// PUT update session in PostgreSQL
+app.put('/api/user_dashboard_data/:id', async (req, res) => {
+  const { id } = req.params;
+  const { week_start, workouts_done, calories_burned } = req.body;
+  try {
+    const result = await pool.query(
+      `UPDATE user_dashboard_data
+       SET week_start = $1, workouts_done = $2, calories_burned = $3
+       WHERE id = $4
+       RETURNING *`,
+      [week_start, workouts_done, calories_burned, id]
+    );
+
+    if (result.rowCount === 0) return res.status(404).json({ error: "Session non trouvée" });
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erreur lors de la mise à jour" });
+  }
+});
+
+// Créer un abonnement pour un utilisateur (admin ou user lui-même)
+app.post('/api/abonnement', authenticateToken, async (req, res) => {
+  const { startDate, endDate } = req.body;
+  const userId = req.user.id;
+
+  if (!startDate || !endDate) {
+    return res.status(400).json({ error: "startDate et endDate sont requis" });
+  }
+
+  try {
+    // Insert un nouvel abonnement lié à l'utilisateur connecté
+    const result = await pool.query(
+      `INSERT INTO abonnement (user_id, start_date, end_date)
+       VALUES ($1, $2, $3) RETURNING *`,
+      [userId, startDate, endDate]
+    );
+
+    res.status(201).json({ message: "Abonnement créé", abonnement: result.rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erreur lors de la création de l'abonnement" });
+  }
+});
+
+// Récupérer les jours restants d'abonnement pour l'utilisateur connecté
+app.get('/api/abonnement/jours-restants', authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const result = await pool.query(
+      `SELECT end_date FROM abonnement WHERE user_id = $1 ORDER BY end_date DESC LIMIT 1`,
+      [userId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.json({ joursRestants: 0, message: "Pas d'abonnement trouvé" });
+    }
+
+    const endDate = result.rows[0].end_date;
+    const today = new Date();
+    const diffTime = endDate.getTime() - today.getTime();
+    const joursRestants = Math.max(Math.ceil(diffTime / (1000 * 60 * 60 * 24)), 0);
+
+    res.json({ joursRestants });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erreur lors de la récupération des jours restants" });
+  }
+});
+
+
 app.listen(5000, () => {
   console.log("Server running on http://localhost:5000");
 });
+
