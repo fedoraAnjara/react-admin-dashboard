@@ -29,7 +29,7 @@ const handleFormSubmit = async (values, { resetForm }) => {
 
   return (
     <Box m="20px">
-      <Header title="CREATE USER" subtitle="Create a New User Profile" />
+      <Header title="Create a new User" />
 
       <Formik
         onSubmit={handleFormSubmit}

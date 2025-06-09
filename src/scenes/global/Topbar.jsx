@@ -52,10 +52,10 @@ const Topbar = () => {
         <IconButton>
           <NotificationsOutlinedIcon />
         </IconButton>
-        <IconButton onClick={handleSettingsClick}>
+        <IconButton>
           <SettingsOutlinedIcon />
         </IconButton>
-        <IconButton>
+        <IconButton  onClick={handleSettingsClick}>
           <PersonOutlinedIcon />
         </IconButton>
 

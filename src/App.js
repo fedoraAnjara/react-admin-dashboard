@@ -5,6 +5,7 @@ import React, { useContext } from "react";
 import Topbar from "./scenes/global/Topbar";
 import Sidebar from "./scenes/global/Sidebar";
 import Dashboard from "./scenes/dashboard/index";
+import DashboardUser from "./scenes/dashboard/userDashboard";
 import Team from "./scenes/team/index";
 import Invoices from "./scenes/invoices/index";
 import Contacts from "./scenes/contacts/index";
@@ -50,8 +51,9 @@ function UserLayout({ setIsSidebar }) {
       <Sidebar isSidebar={true} />
       <main className="content">
         <Topbar setIsSidebar={setIsSidebar} />
-        <h1>Interface utilisateur (simple)</h1>
-        {/* ici tu mets les composants/pages de l’utilisateur */}
+        <Routes>
+          <Route path="/" element={<DashboardUser />} />
+        </Routes>
       </main>
     </>
   );
