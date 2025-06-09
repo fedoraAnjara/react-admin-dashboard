@@ -12,6 +12,7 @@ import Invoices from "./scenes/invoices/index";
 import Contacts from "./scenes/contacts/index";
 import Bar from "./scenes/bar/index";
 import Form from "./scenes/form/index";
+import ChatBot from "./scenes/form/chat";
 import Line from "./scenes/line/index";
 import Pie from "./scenes/pie/index";
 import FAQ from "./scenes/faq/index";
@@ -54,6 +55,8 @@ function UserLayout({ setIsSidebar }) {
         <Topbar setIsSidebar={setIsSidebar} />
         <Routes>
           <Route path="/" element={<DashboardUser />} />
+          <Route path="/chat" element={<ChatBot />} />
+
         </Routes>
       </main>
     </>
