@@ -1,204 +1,204 @@
-import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
+import { useEffect, useState, useContext } from "react";
+import {
+  Box,
+  Typography,
+  useTheme,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  TablePagination,
+} from "@mui/material";
 import { tokens } from "../../theme";
-import { mockTransactions } from "../../data/mockData";
-import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
-import EmailIcon from "@mui/icons-material/Email";
-import PointOfSaleIcon from "@mui/icons-material/PointOfSale";
-import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import TrafficIcon from "@mui/icons-material/Traffic";
-import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
-import Header from "../../components/Header";
-import LineChart from "../../components/LineChart";
-import GeographyChart from "../../components/GeographyChart";
-import BarChart from "../../components/BarChart";
+import { AuthContext } from "../../AuthContext";
 import StatBox from "../../components/StatBox";
-import ProgressCircle from "../../components/ProgressCircle";
+import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
+import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
 
 const DashboardUser = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const { auth } = useContext(AuthContext);
+
+  const [dashboardData, setDashboardData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Pagination state
+  const [page, setPage] = useState(0);
+  const rowsPerPage = 4;
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        if (!auth?.token) {
+          setError("Pas de token d'authentification");
+          setLoading(false);
+          return;
+        }
+
+        const res = await fetch("http://localhost:5000/api/dashboard", {
+          headers: {
+            Authorization: `Bearer ${auth.token}`,
+          },
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(`Erreur ${res.status}: ${errorData.error || "Erreur inconnue"}`);
+        }
+
+        const data = await res.json();
+        setDashboardData(data);
+        setLoading(false);
+      } catch (error) {
+        console.error("Erreur lors du chargement:", error);
+        setError(error.message);
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [auth?.token]);
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  if (loading) {
+    return (
+      <Box m="20px">
+        <Typography>Chargement des données...</Typography>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box m="20px">
+        <Typography color="error">Erreur: {error}</Typography>
+      </Box>
+    );
+  }
+
+  const totalCalories = dashboardData.reduce((sum, d) => sum + d.calories_burned, 0);
+  const totalWorkouts = dashboardData.reduce((sum, d) => sum + d.workouts_done, 0);
+
+  // Données à afficher dans le tableau (page courante)
+  const paginatedData = dashboardData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
     <Box m="20px">
-      {/* HEADER */}
-      <Box display="flex" justifyContent="space-between" alignItems="center">
-        <Header title="DASHBOARD" subtitle="Welcome to your dashboard" />
+      <Typography variant="h4" fontWeight="bold" color={colors.grey[100]} mb="20px">
+        Dashboard Utilisateur
+      </Typography>
+
+      <Typography variant="h6" color={colors.grey[300]} mb="20px">
+        Bienvenue {auth?.name || "Utilisateur"}
+      </Typography>
+
+      {/* Statistiques */}
+      <Box display="flex" gap="20px" mb="30px" flexWrap="wrap">
+        <Box
+          flex="1"
+          minWidth="250px"
+          backgroundColor={colors.primary[400]}
+          borderRadius="8px"
+          p="20px"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <StatBox
+            title={totalWorkouts.toString()}
+            subtitle="Séances effectuées"
+            progress={Math.min(totalWorkouts / 50, 1)}
+            increase="+3 cette semaine"
+            icon={<FitnessCenterIcon sx={{ color: colors.greenAccent[600], fontSize: "28px" }} />}
+          />
+        </Box>
+
+        <Box
+          flex="1"
+          minWidth="250px"
+          backgroundColor={colors.primary[400]}
+          borderRadius="8px"
+          p="20px"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <StatBox
+            title={totalCalories.toString()}
+            subtitle="Calories brûlées"
+            progress={Math.min(totalCalories / 50000, 1)}
+            increase="+7% cette semaine"
+            icon={<LocalFireDepartmentIcon sx={{ color: colors.redAccent[600], fontSize: "28px" }} />}
+          />
+        </Box>
       </Box>
 
-      {/* GRID & CHARTS */}
-      <Box
-        display="grid"
-        gridTemplateColumns="repeat(12, 1fr)"
-        gridAutoRows="140px"
-        gap="20px"
-      >
-        {/* ROW 1 */}
-        <Box
-          gridColumn="span 3"
-          backgroundColor={colors.primary[400]}
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-        >
-        <StatBox
-        title="32"
-        subtitle="Séances effectuées"
-        progress="0.6"
-        increase="+3 cette semaine"
-        icon={<FitnessCenterIcon sx={{ color: colors.greenAccent[600], fontSize: "26px" }} />}
-        />
+      {/* Détails des semaines en tableau */}
+      <Box>
+        <Typography variant="h6" fontWeight="600" color={colors.grey[100]} mb="10px">
+          Détail par semaine
+        </Typography>
 
-        </Box>
-        <Box
-          gridColumn="span 3"
-          backgroundColor={colors.primary[400]}
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-        >
-          <StatBox
-            title="431,225"
-            subtitle="Sales Obtained"
-            progress="0.50"
-            increase="+21%"
-            icon={
-              <PointOfSaleIcon
-                sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
-              />
-            }
-          />
-        </Box>
-        <Box
-          gridColumn="span 3"
-          backgroundColor={colors.primary[400]}
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-        >
-          <StatBox
-            title="32,441"
-            subtitle="New Clients"
-            progress="0.30"
-            increase="+5%"
-            icon={
-              <PersonAddIcon
-                sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
-              />
-            }
-          />
-        </Box>
-        <Box
-          gridColumn="span 3"
-          backgroundColor={colors.primary[400]}
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-        >
-          <StatBox
-            title="1,325,134"
-            subtitle="Traffic Received"
-            progress="0.80"
-            increase="+43%"
-            icon={
-              <TrafficIcon
-                sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
-              />
-            }
-          />
-        </Box>
+        {dashboardData.length === 0 ? (
+          <Typography color={colors.grey[300]}>Aucune donnée trouvée.</Typography>
+        ) : (
+          <Paper sx={{ width: "100%", overflow: "hidden", backgroundColor: colors.primary[500] }}>
+            <TableContainer>
+              <Table stickyHeader aria-label="tableau détails semaines">
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ color: colors.greenAccent[400] }}>Semaine du</TableCell>
+                    <TableCell>Calories brûlées</TableCell>
+                    <TableCell>Séances effectuées</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {paginatedData.map((item, index) => (
+                    <TableRow key={index} hover role="checkbox" tabIndex={-1}>
+                      <TableCell sx={{ color: colors.greenAccent[400] }}>
+                        {new Date(item.week_start).toLocaleDateString("fr-FR", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </TableCell>
+                      <TableCell>{item.calories_burned}</TableCell>
+                      <TableCell>{item.workouts_done}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
 
-        {/* ROW 2 - Courbe des calories */}
-        <Box
-        gridColumn="span 8"
-        gridRow="span 2"
-        backgroundColor={colors.primary[400]}
-        >
-        <Box
-            mt="25px"
-            p="0 30px"
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-        >
-            <Box>
-            <Typography
-                variant="h5"
-                fontWeight="600"
-                color={colors.grey[100]}
-            >
-                Évolution des calories brûlées
-            </Typography>
-            <Typography
-                variant="h3"
-                fontWeight="bold"
-                color={colors.greenAccent[500]}
-            >
-                14 250 kcal cette semaine
-            </Typography>
-            </Box>
-            <Box>
-            <IconButton>
-                <DownloadOutlinedIcon
-                sx={{ fontSize: "26px", color: colors.greenAccent[500] }}
-                />
-            </IconButton>
-            </Box>
-        </Box>
-        <Box height="250px" m="-20px 0 0 0">
-            <LineChart isDashboard={true} />
-        </Box>
-        </Box>
-
-        <Box
-          gridColumn="span 4"
-          gridRow="span 2"
-          backgroundColor={colors.primary[400]}
-          overflow="auto"
-        >
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            borderBottom={`4px solid ${colors.primary[500]}`}
-            colors={colors.grey[100]}
-            p="15px"
-          >
-            <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
-              Recent Transactions
-            </Typography>
-          </Box>
-          {mockTransactions.map((transaction, i) => (
-            <Box
-              key={`${transaction.txId}-${i}`}
-              display="flex"
-              justifyContent="space-between"
-              alignItems="center"
-              borderBottom={`4px solid ${colors.primary[500]}`}
-              p="15px"
-            >
-              <Box>
-                <Typography
-                  color={colors.greenAccent[500]}
-                  variant="h5"
-                  fontWeight="600"
-                >
-                  {transaction.txId}
-                </Typography>
-                <Typography color={colors.grey[100]}>
-                  {transaction.user}
-                </Typography>
-              </Box>
-              <Box color={colors.grey[100]}>{transaction.date}</Box>
-              <Box
-                backgroundColor={colors.greenAccent[500]}
-                p="5px 10px"
-                borderRadius="4px"
-              >
-                ${transaction.cost}
-              </Box>
-            </Box>
-          ))}
-        </Box>
+            <TablePagination
+              rowsPerPageOptions={[rowsPerPage]}
+              component="div"
+              count={dashboardData.length}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              labelRowsPerPage="" // Pour ne pas afficher "Rows per page"
+              sx={{
+                backgroundColor: colors.primary[500],
+                color: colors.grey[100],
+                ".MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows": {
+                  color: colors.grey[100],
+                },
+                ".MuiTablePagination-actions button": {
+                  color: colors.grey[100],
+                },
+              }}
+            />
+          </Paper>
+        )}
       </Box>
     </Box>
   );

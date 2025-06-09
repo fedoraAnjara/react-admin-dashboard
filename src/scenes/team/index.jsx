@@ -1,89 +1,102 @@
+import { useState, useEffect, useContext } from "react";
 import { Box, Typography, useTheme } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
-import { mockDataTeam } from "../../data/mockData";
-import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
-import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
-import SecurityOutlinedIcon from "@mui/icons-material/SecurityOutlined";
+import { AuthContext } from "../../AuthContext";
 import Header from "../../components/Header";
 
 const Team = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const { auth } = useContext(AuthContext);
+
+  const [rows, setRows] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!auth?.token) return;
+
+      try {
+        const res = await fetch("http://localhost:5000/api/user_dashboard_data", {
+          headers: { Authorization: `Bearer ${auth.token}` },
+        });
+        if (!res.ok) throw new Error("Erreur chargement des données");
+        const data = await res.json();
+        console.log("Données reçues :", data);
+        setRows(data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchData();
+  }, [auth?.token]);
+
   const columns = [
-    { field: "id", headerName: "ID" },
+    { field: "id", headerName: "ID", width: 70 },
+    { field: "name", headerName: "Nom", flex: 1, editable: false },
     {
-      field: "name",
-      headerName: "Name",
-      flex: 1,
-      cellClassName: "name-column--cell",
-    },
-    {
-      field: "age",
-      headerName: "Age",
+      field: "workouts_done",
+      headerName: "Séances effectuées",
       type: "number",
-      headerAlign: "left",
-      align: "left",
+      width: 150,
+      editable: true,
     },
     {
-      field: "phone",
-      headerName: "Phone Number",
-      flex: 1,
+      field: "workouts_goal",
+      headerName: "Objectif séances",
+      type: "number",
+      width: 150,
+      editable: true,
     },
     {
-      field: "email",
-      headerName: "Email",
-      flex: 1,
+      field: "calories_burned",
+      headerName: "Calories brûlées",
+      type: "number",
+      width: 150,
+      editable: true,
     },
     {
-      field: "accessLevel",
-      headerName: "Access Level",
-      flex: 1,
-      renderCell: ({ row: { access } }) => {
-        return (
-          <Box
-            width="60%"
-            m="0 auto"
-            p="5px"
-            display="flex"
-            justifyContent="center"
-            backgroundColor={
-              access === "admin"
-                ? colors.greenAccent[600]
-                : access === "manager"
-                ? colors.greenAccent[700]
-                : colors.greenAccent[700]
-            }
-            borderRadius="4px"
-          >
-            {access === "admin" && <AdminPanelSettingsOutlinedIcon />}
-            {access === "manager" && <SecurityOutlinedIcon />}
-            {access === "user" && <LockOpenOutlinedIcon />}
-            <Typography color={colors.grey[100]} sx={{ ml: "5px" }}>
-              {access}
-            </Typography>
-          </Box>
-        );
-      },
+      field: "calories_goal",
+      headerName: "Objectif calories",
+      type: "number",
+      width: 150,
+      editable: true,
     },
   ];
 
+  const handleRowEditCommit = async (params) => {
+    const { id, field, value } = params;
+    const updatedRow = rows.find((row) => row.id === id);
+    if (!updatedRow) return;
+    const newRow = { ...updatedRow, [field]: value };
+
+    setRows((prev) => prev.map((row) => (row.id === id ? newRow : row)));
+
+    try {
+      const res = await fetch(`http://localhost:5000/api/user_dashboard_data/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${auth.token}`,
+        },
+        body: JSON.stringify(newRow),
+      });
+      if (!res.ok) throw new Error("Erreur mise à jour");
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <Box m="20px">
-      <Header title="TEAM" subtitle="Managing the Team Members" />
+      <Header title="Suivi des séances" subtitle="Gestion des objectifs utilisateurs" />
       <Box
         m="40px 0 0 0"
         height="75vh"
         sx={{
-          "& .MuiDataGrid-root": {
-            border: "none",
-          },
-          "& .MuiDataGrid-cell": {
-            borderBottom: "none",
-          },
-          "& .name-column--cell": {
-            color: colors.greenAccent[300],
-          },
+          "& .MuiDataGrid-root": { border: "none" },
+          "& .MuiDataGrid-cell": { borderBottom: "none" },
           "& .MuiDataGrid-columnHeaders": {
             backgroundColor: colors.blueAccent[700],
             borderBottom: "none",
@@ -95,12 +108,18 @@ const Team = () => {
             borderTop: "none",
             backgroundColor: colors.blueAccent[700],
           },
-          "& .MuiCheckbox-root": {
-            color: `${colors.greenAccent[200]} !important`,
-          },
         }}
       >
-        <DataGrid checkboxSelection rows={mockDataTeam} columns={columns} />
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          pageSize={4}
+          rowsPerPageOptions={[4]}
+          checkboxSelection
+          disableSelectionOnClick
+          onCellEditCommit={handleRowEditCommit}
+          getRowId={(row) => row.id} // change ici si nécessaire
+        />
       </Box>
     </Box>
   );

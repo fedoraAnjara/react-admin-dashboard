@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import pkg from "pg";
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
 
 const { Pool } = pkg;
 
@@ -15,6 +17,85 @@ const pool = new Pool({
   database: "userdb",
   password: "240503",
   port: 5432,
+});
+
+// Middleware d'authentification
+export const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  
+  if (!token) {
+    return res.status(401).json({ error: "Token manquant" });
+  }
+
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET || 'your-secret-key', (err, user) => {
+    if (err) {
+      return res.status(403).json({ error: "Token invalide" });
+    }
+    req.user = user;
+    next();
+  });
+};
+
+app.post("/api/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+    const user = result.rows[0];
+
+    if (!user) {
+      return res.status(401).json({ error: "Utilisateur non trouvé" });
+    }
+
+    // Comparer le mot de passe
+    if (user.password !== password) {
+      return res.status(401).json({ error: "Mot de passe incorrect" });
+    }
+
+    // Créer un VRAI token JWT avec l'ID utilisateur
+    const token = jwt.sign(
+      { 
+        id: user.id, 
+        email: user.email, 
+        role: user.role 
+      },
+      process.env.ACCESS_TOKEN_SECRET || 'your-secret-key',
+      { expiresIn: '24h' }
+    );
+
+    // Réponse avec le vrai token et l'ID
+    res.json({
+      id: user.id,
+      name: user.first_name + " " + user.last_name,
+      email: user.email,
+      role: user.role,
+      token: token,
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+// Route dashboard sécurisée par utilisateur
+app.get('/api/dashboard', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id; // ID récupéré du token JWT
+
+    const data = await pool.query(`
+      SELECT calories_burned, workouts_done, week_start
+      FROM user_dashboard_data
+      WHERE user_id = $1
+      ORDER BY week_start ASC
+    `, [userId]);
+
+    res.json(data.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erreur lors de la récupération des données dashboard" });
+  }
 });
 
 // Route POST pour créer un utilisateur
@@ -142,4 +223,8 @@ app.delete("/api/contacts/:id", async (req, res) => {
     console.error(err);
     res.status(500).json({ error: "Erreur serveur" });
   }
+});
+
+app.listen(5000, () => {
+  console.log("Server running on http://localhost:5000");
 });

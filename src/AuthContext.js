@@ -9,9 +9,10 @@ export const AuthProvider = ({ children }) => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
     const name = localStorage.getItem("name");
+    const id = localStorage.getItem("id"); // Ajouter l'ID
 
-    if (token && role && name) {
-      setAuth({ token, role, name });
+    if (token && role && name && id) {
+      setAuth({ token, role, name, id });
     }
   }, []);
 
@@ -19,7 +20,13 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("token", data.token);
     localStorage.setItem("role", data.role);
     localStorage.setItem("name", data.name);
-    setAuth({ token: data.token, role: data.role, name: data.name });
+    localStorage.setItem("id", data.id); // Stocker l'ID
+    setAuth({ 
+      token: data.token, 
+      role: data.role, 
+      name: data.name, 
+      id: data.id 
+    });
   };
 
   const logout = () => {
